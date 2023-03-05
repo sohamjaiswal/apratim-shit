@@ -1,106 +1,68 @@
-<style lang="scss">
-	section {
-		height: 60vh;
-		width: 100vw;
-		overflow: visible;
-		position: relative;
-		& > .image-track {
-			display: flex;
-			gap: 4vmin;
-			position: absolute;
-			left: 50%;
-			top: 50%;
-			transform: translate(0%, -50%);
-			user-select: none;
-			& > img {
-				width: 55vmin;
-				height: 46vmin;
-				object-fit: cover;
-				object-position: center;
-				border-radius: 18px;
-			}
-		}
-	}
-	@media screen and (max-width: 1024px) {
-		section {
-			height: 46vmin !important;
-		}
-		.image-track {
-			left: 25% !important;
-		}
-	}
-</style>
+<script lang="ts">
+	import type { ICarouselProps } from "$lib/types/carousel.types";
 
-<script type="ts">
-	import sampleImage from "$lib/assets/sample.webp";
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    interface $$Props extends ICarouselProps{}
 
-	let track: any;
-
-	export let images: string[] = [
-		sampleImage,
-		sampleImage,
-		sampleImage,
-		sampleImage,
-		sampleImage,
-		sampleImage
-	];
-
-	const handleScroll = () => {
-		return null;
-	};
-
-	const handleMouseMove = (e: MouseEvent | TouchEvent) => {
-		if (track.dataset.mouseDownAt === "0") return;
-		const mouseDelta = parseFloat(track.dataset.mouseDownAt) - 
-			((e as MouseEvent).clientX ?? (e as TouchEvent).touches[0].clientX),
-			maxDelta = window.innerWidth / 2;
-		const percentage = (mouseDelta / maxDelta) * -100,
-			nextPercentage = Math.max(
-				Math.min(parseFloat(track.dataset.prevPercentage) + percentage, 0),
-				-100
-			);
-		track.dataset.percentage = nextPercentage;
-		track.style.transform = `translate(${nextPercentage}%, -50%)`;
-		track.animate(
-			{
-				transform: `translate(${nextPercentage}%, -50%)`
-			},
-			{ duration: 1200, fill: "forwards" }
-		);
-
-		for (const image of track.getElementsByClassName("image")) {
-			image.animate(
-				{
-					objectPosition: `${100 + nextPercentage}% center`
-				},
-				{ duration: 1200, fill: "forwards" }
-			);
-		}
-	};
-
-	const handleMouseUp = () => {
-		track.dataset.mouseDownAt = "0";
-		track.dataset.prevPercentage = track.dataset.percentage;
-	};
-
-	const handleMouseDown = (e: MouseEvent | TouchEvent) => {
-		track.dataset.mouseDownAt = (e as MouseEvent).clientX ?? (e as TouchEvent).touches[0].clientX;
-	};
+    export let images: $$Props['images'];
+    $: imagesReactive = images;
+    let carousel: HTMLElement;
+    
+    const updateCarousel = () => {
+        const width: number = (carousel.childNodes.item(0) as Element).clientWidth;
+        const carouselImages = document.querySelectorAll('.carouselImages');
+        carousel.style.translate = `${-window.scrollY}px`;
+        const firstImage: Element = carouselImages[0];
+        if (firstImage.getBoundingClientRect().x <= -width) {
+            const firstImageUrl: string | undefined = imagesReactive.shift();
+            if (!firstImageUrl) return;
+            imagesReactive.push(firstImageUrl);
+            imagesReactive = imagesReactive;
+            console.log(imagesReactive);
+        }
+    }
 </script>
 
-<section>
-	<div class="image-track" bind:this="{track}" data-mouse-down-at="0" data-prev-percentage="0">
-		{#each images as image}
-			<img src="{image}" alt="" class="" draggable="false" />
-		{/each}
-	</div>
-</section>
-<svelte:window
-	on:scroll="{handleScroll}"
-	on:mousemove="{handleMouseMove}"
-	on:touchmove="{handleMouseMove}"
-	on:mouseup="{handleMouseUp}"
-	on:touchend="{handleMouseUp}"
-	on:mousedown="{handleMouseDown}"
-	on:touchstart="{handleMouseDown}"
-/>
+<div class="carousel-container" bind:this={carousel}>
+
+    {#each imagesReactive as image, index}
+    
+    <img src={image} alt="ccet" class="carouselImages" />
+    
+    {/each}
+
+</div>
+<svelte:window on:scroll="{updateCarousel}"></svelte:window>
+
+<style lang="scss">
+
+    .carousel-container {
+        position: absolute;
+        left: -32px;
+        display: flex;
+        gap: 32px;
+        height: 65vh;
+        width: fit-content;
+        // background-color: red;
+        transform: rotate3d(1, 1, 1, 5deg) translate3d(0, 0, 0);
+        overflow-x: scroll;
+        scrollbar-width: none;  /* Firefox */
+        -ms-overflow-style: none;  /* IE and Edge */
+        &::-webkit-scrollbar {
+            display: none;
+        }
+        scroll-behavior: smooth;
+        scroll-snap-type: mandatory;
+
+        img {
+            image-rendering: optimizeSpeed;
+            object-fit: cover;
+            object-position: 0%;
+            height: 100%;
+            width: 50vw;
+            border-radius: 16px;
+        }
+        scroll-snap-align: center;
+    }
+
+</style>

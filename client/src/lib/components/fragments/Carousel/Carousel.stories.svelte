@@ -1,6 +1,6 @@
 <script>
 	import { Meta, Template, Story } from "@storybook/addon-svelte-csf";
-	import Carousel from "./Carousel.svelte";
+	import Carousel from "./Carousel.shit.svelte";
 </script>
 
 <Meta title="Carousel" component="{Carousel}" />
